@@ -181,11 +181,13 @@ def update_cloudwatch_metrics(stats_server, region, namespace, metric_prefix):
             stats = retrieve_stats(stats_server)
         except Exception as e:
             logging.error("Failed to retrieve uWSGI stats: %s" % e)
+            return
         try:
             metrics = generate_metrics(stats)
             put_metrics(metrics, region, namespace, metric_prefix)
         except Exception as e:
             logging.error("Failed to put metrics: %s" % e)
+            return
 
     return f
 
