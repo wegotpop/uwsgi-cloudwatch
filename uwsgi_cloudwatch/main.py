@@ -30,11 +30,20 @@ def run_periodically(func, interval):
     _set()
 
 
-def put_metrics(metrics, region, namespace, metric_prefix):
+def put_metrics(metrics, region, namespace, metric_prefix, dimensions):
     """ Puts metrics in target CloudWatch namespace. """
 
     timestamp = arrow.get().datetime
     client = boto3.client('cloudwatch', region_name=region)
+
+    # Reformat metric dimensions
+    metric_dimensions = []
+    if dimensions:
+        for name, value in dimensions.items():
+            metric_dimensions.append({
+                'Name': name,
+                'Value': value
+            })
 
     # Assemble Metrics
     metric_data = []
@@ -50,20 +59,23 @@ def put_metrics(metrics, region, namespace, metric_prefix):
         else:
             unit = "None"
 
+
         if type(value) == list:
             for i in value:
                 metric_data.append({
                     'MetricName': metric_prefix + name,
                     'Timestamp': timestamp,
                     'Value': i,
-                    'Unit': unit
+                    'Unit': unit,
+                    'Dimensions': metric_dimensions
                 })
         else:
             metric_data.append({
                 'MetricName': metric_prefix + name,
                 'Timestamp': timestamp,
                 'Value': value,
-                'Unit': unit
+                'Unit': unit,
+                'Dimensions': metric_dimensions
             })
 
     # Put Metrics
@@ -172,7 +184,7 @@ def retrieve_stats(stats_server):
     return response.json()
 
 
-def update_cloudwatch_metrics(stats_server, region, namespace, metric_prefix):
+def update_cloudwatch_metrics(stats_server, region, namespace, metric_prefix, dimensions=None):
     """ Update a CloudWatch namespace with the latest metrics generated from
         uWSGI Stats Server.
     """
@@ -184,7 +196,7 @@ def update_cloudwatch_metrics(stats_server, region, namespace, metric_prefix):
             return
         try:
             metrics = generate_metrics(stats)
-            put_metrics(metrics, region, namespace, metric_prefix)
+            put_metrics(metrics, region, namespace, metric_prefix, dimensions)
         except Exception as e:
             logging.error("Failed to put metrics: %s" % e)
             return
