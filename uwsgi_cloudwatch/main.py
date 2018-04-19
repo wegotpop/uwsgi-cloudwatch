@@ -90,6 +90,8 @@ def generate_metrics(stats):
     """ Generates metrics from uWSGI stats. """
     m = {}
     m['SignalQueueCount'] = stats['signal_queue']
+    m['ListenQueueCount'] = stats['listen_queue']
+    m['ListenQueueErrorsCount'] = stats['listen_queue_errors']
     m['LoadCount'] = stats['load']
 
     # Lock Metrics
